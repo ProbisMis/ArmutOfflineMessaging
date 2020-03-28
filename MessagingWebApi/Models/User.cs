@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace OfflineMessaging.Models
+namespace MessagingWebApi.Models
 {
     public class User
     {
@@ -14,7 +14,7 @@ namespace OfflineMessaging.Models
         public DateTime? LastLoginDate { get; set; }
 
 
-        public ICollection<User> Friends { get; set; }
-        public ICollection<Chat> Converstaions { get; set; }
+        public virtual ICollection<User> Friends { get; set; }
+        public virtual  ICollection<Chat> Converstaions { get; set; }
     }
 }
