@@ -48,8 +48,6 @@ namespace MessagingWebApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("SenderId");
-
                     b.ToTable("Chat");
                 });
 
@@ -107,23 +105,39 @@ namespace MessagingWebApi.Migrations
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Username")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("MessagingWebApi.Models.UserRelationship", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("FriendId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserRelationships");
                 });
 
             modelBuilder.Entity("MessagingWebApi.Models.Chat", b =>
                 {
                     b.HasOne("MessagingWebApi.Models.User", null)
-                        .WithMany("Converstaions")
+                        .WithMany("Chats")
                         .HasForeignKey("UserId");
                 });
 
@@ -132,13 +146,6 @@ namespace MessagingWebApi.Migrations
                     b.HasOne("MessagingWebApi.Models.Chat", null)
                         .WithMany("Messages")
                         .HasForeignKey("ChatId");
-                });
-
-            modelBuilder.Entity("MessagingWebApi.Models.User", b =>
-                {
-                    b.HasOne("MessagingWebApi.Models.User", null)
-                        .WithMany("Friends")
-                        .HasForeignKey("UserId");
                 });
 #pragma warning restore 612, 618
         }

@@ -62,6 +62,27 @@ namespace MessagingWebApi.Services
             return result;
         }
 
+        public async Task<List<User>> GetFriends(int id)
+        {
+            var relations = _context.UserRelationships.Where(x => (x.FriendId == id || x.UserId == id)).ToList(); //TODO: Çok kötü..
+            var distinctUsers = new List<User>();
+            foreach (var relation in relations)
+            {
+                User tempUser;
+                if (relation.UserId == id)
+                {
+                    tempUser = await GetUserById(relation.FriendId);
+                    distinctUsers.Add(tempUser);
+                }
+                else
+                {
+                    tempUser = await GetUserById(relation.UserId);
+                    distinctUsers.Add(tempUser);
+                }
+            }
+
+            return distinctUsers;
+        }
         public async Task<User> CheckUsernamePassword(string username, string password)
         {
             var result = _context.Users.Where(x => x.Username == username && x.Password == password).FirstOrDefault();
@@ -76,11 +97,24 @@ namespace MessagingWebApi.Services
 
                 if (result != null && result.Count == 0) return null;
 
-                if (user.Friends == null)
-                    user.Friends = new List<User>();
+                User firstUser = user, secondUser = friend;
+                if (user.Id < friend.Id)
+                {
+                    firstUser = user;
+                    secondUser = friend;
+                }
+                else
+                {
+                    firstUser = friend;
+                    secondUser = user;
+                }
+                var relation = new UserRelationship()
+                {
+                    UserId = firstUser.Id,
+                    FriendId = secondUser.Id
+                };
 
-                user.Friends.Add(friend);
-                _context.Update(user);
+                _context.Add(relation);
                 await _context.SaveChangesAsync();
                 return user;
             }
@@ -97,9 +131,15 @@ namespace MessagingWebApi.Services
         {
             try
             {
-                var currentUser = _context.Users.Where(x => x.Id == userId).First();
-                var isFriend = currentUser.Friends.Select(z => z.Id == friendId).First();
-
+                var isFriend = false;
+                if (IsFirstUser(userId,friendId))
+                {
+                     isFriend = _context.UserRelationships.Select(z => z.UserId == userId).First();
+                }
+                else
+                {
+                     isFriend = _context.UserRelationships.Select(z => z.UserId == friendId).First();
+                }
                 return true;
             }
             catch (Exception ex)
@@ -108,6 +148,19 @@ namespace MessagingWebApi.Services
                 return false;
             }
         }
+
+          public bool IsFirstUser(int userId , int friendId)
+            {
+
+                if (userId < friendId)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
 
 
     }

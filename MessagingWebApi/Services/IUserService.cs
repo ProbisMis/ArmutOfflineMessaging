@@ -17,5 +17,6 @@ namespace MessagingWebApi.Services
         public  Task<User> CheckUsernamePassword(string username, string password);
         public  Task<User> InsertFriend(User user, User friend);
         public  Task<bool> IsFriend(int userId, int friendId);
+        public Task<List<User>> GetFriends(int id);
     }
 }

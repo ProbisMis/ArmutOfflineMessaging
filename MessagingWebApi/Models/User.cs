@@ -13,8 +13,7 @@ namespace MessagingWebApi.Models
         public DateTime? CreatedDate { get; set; }
         public DateTime? LastLoginDate { get; set; }
 
-
-        public virtual ICollection<User> Friends { get; set; }
+        //public virtual ICollection<UserRelationship> Friends { get; set; }
         public virtual ICollection<Chat> Chats { get; set; }
 
         public User()

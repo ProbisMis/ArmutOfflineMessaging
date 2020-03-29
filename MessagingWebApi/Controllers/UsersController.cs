@@ -100,7 +100,7 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user = _userService.GetUserById(userId).Result;
+                    var user = _userService.GetFriends(userId).Result;
                     if (user == null) return BadRequest("User does not exist");
 
                     return Ok(user);
