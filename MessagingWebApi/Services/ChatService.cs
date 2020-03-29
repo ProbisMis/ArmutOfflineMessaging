@@ -13,6 +13,8 @@ namespace MessagingWebApi.Services
         public ChatService(MessagingWebApiContext context)
         {
             _context = context;
+
+
         }
 
         public async Task<Chat> GetChat(User sender, User reciever)
@@ -24,7 +26,11 @@ namespace MessagingWebApi.Services
                             (x.RecieverId == reciever.Id && x.SenderId == sender.Id) ||
                             (x.RecieverId == sender.Id && x.SenderId == reciever.Id))
                         ).First();
+            _context.Entry(isChatInitiliazed).Collection(s => s.Messages).Load();
+            await _context.SaveChangesAsync();
+
             isChatInitiliazed.Messages = _context.Messages.Where(x => x.ChatId == isChatInitiliazed.Id).ToList();
+
             return isChatInitiliazed;
         }
 
@@ -35,7 +41,9 @@ namespace MessagingWebApi.Services
                          (
                              (x.RecieverId == user.Id || x.SenderId == user.Id))
                          ).ToList();
-            return result;
+            
+            
+            return user.Chats.ToList();
         }
 
         public async Task<Chat> CreateChat(User sender, User reciever)

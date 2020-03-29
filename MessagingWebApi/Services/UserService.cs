@@ -37,7 +37,7 @@ namespace MessagingWebApi.Services
             var result = _context.Users.Where(x => x.Username == user.Username).ToList();
 
             if (result != null && result.Count == 0) return null;
-
+            _context.Entry(user).Collection(s => s.Chats).Load();
             _context.Update(user);
             await _context.SaveChangesAsync();
 
