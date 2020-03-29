@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using MessagingWebApi.Data;
+using MessagingWebApi.Services;
 
 namespace MessagingWebApi
 {
@@ -31,6 +32,9 @@ namespace MessagingWebApi
 
             services.AddDbContext<MessagingWebApiContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("MessagingWebApiContext")));
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IMessageService, MessageService>();
+            services.AddScoped<IChatService, ChatService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

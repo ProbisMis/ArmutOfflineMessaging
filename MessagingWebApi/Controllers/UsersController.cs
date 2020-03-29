@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
+using MessagingWebApi.Services;
 
 namespace MessagingWebApi.Controllers
 {
@@ -14,17 +15,17 @@ namespace MessagingWebApi.Controllers
     [Route("user")]
     public class UsersController : Controller
     {
-        private readonly MessagingWebApiContext _context;
+        private readonly IUserService _userService;
 
-        public UsersController(MessagingWebApiContext context)
+        public UsersController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         // GET: Users
         public async Task<IActionResult> Index()
         {
-            return Ok(_context.Users.ToList());
+            return Ok(await _userService.GetAllUsers());
         }
 
         // POST: Users/Create
@@ -36,16 +37,16 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var result = _context.Users.Where(x => x.Username == user.Username).ToList();
+                    var result = await _userService.InsertUser(user);
 
-                    if (result != null && result.Count > 0) return BadRequest("User already exist");
-
-                    //hash password 
-                    user.CreatedDate = DateTime.Now;
-                    user.LastLoginDate = DateTime.Now;
-                    _context.Add(user);
-                    await _context.SaveChangesAsync();
-                    return Ok(user);
+                    if (result != null)
+                        return Ok(result);
+                    else
+                    {
+                        return NotFound(typeof(User));
+                    }
+                    //Assert
+                   
                 }
                 return BadRequest("Invalid Model");
             }
@@ -66,19 +67,19 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var result = _context.Users.Any(o => o.Username == user.Username);
-                 
-                    if (!result) return BadRequest("User does not exist");
-
-                    var foundUser = _context.Users.Where(x => x.Password == user.Password && x.Username == user.Username).ToList();
-
-                    if (foundUser == null && foundUser.Count == 0) return BadRequest("Password does not match");
-
-                    //hash password 
-                    foundUser.FirstOrDefault().LastLoginDate = DateTime.Now;
-                    _context.Update(foundUser.FirstOrDefault());
-                    await _context.SaveChangesAsync();
-                    return Ok(foundUser);
+                    //var result = _context.Users.Any(o => o.Username == user.Username);
+                    //if (!result) return BadRequest("User does not exist");
+                    var foundUser = _userService.GetUserByUsername(user.Username).Result;
+                    if (foundUser == null) return BadRequest("User does not exist");
+                    var foundUser1 = _userService.CheckUsernamePassword(user.Username, user.Password).Result;
+                    if (foundUser1 == null) return BadRequest("User/pass does not match");
+                    
+                    //var foundUser = _context.Users.Where(x => x.Password == user.Password && x.Username == user.Username).First();
+                    //if (foundUser == null) return BadRequest("user Does not exist");
+                    
+                    foundUser1.LastLoginDate = DateTime.Now;
+                    var updatedUser = await _userService.UpdateUser(foundUser);
+                    return Ok(updatedUser);
                 }
                 return BadRequest("Invalid Model");
             }
@@ -91,18 +92,18 @@ namespace MessagingWebApi.Controllers
         }
 
         // GET: Users/Friends
-        [HttpGet("friends/{user_id}")]
-        public async Task<IActionResult> Friends(int user_id)
+        [HttpGet("friends/{userId}")]
+        public async Task<IActionResult> Friends(int userId)
         {
             //TODO: Correct return types add logging
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var user = _context.Users.Find(user_id);
+                    var user = _userService.GetUserById(userId);
                     if (user == null) return BadRequest("User does not exist");
 
-                    return Ok(user);
+                    return Ok(user.Result.Friends);
                 }
                 return BadRequest("Invalid Model");
             }
@@ -124,25 +125,24 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    int user_id = request.user_id;
-                    int friend_id = request.friend_id;
-
-                    var user = _context.Users.Find(user_id);
+                    var user = await _userService.GetUserById(request.user_id);
+                    var friend = await _userService.GetUserById(request.friend_id);
                     if (user == null) return BadRequest("User does not exist");
-
-                    var friend = _context.Users.Find(friend_id);
                     if (friend == null) return BadRequest("User does not exist");
+                    
+                    var isFriend = await _userService.IsFriend(user.Id, friend.Id);
+                    if (isFriend) return BadRequest("Already friends");
+                   
+                    var result = await _userService.InsertFriend(user, friend);
 
-                    var isFriend = _context.Users.Any(x => x.Friends.Any(z => z.Id == friend_id));
-
-                    //Not a good place
-                    if (user.Friends == null)
-                        user.Friends = new List<User>();
-
-                    user.Friends.Add(friend);
-                    _context.Update(user);
-                    await _context.SaveChangesAsync();
-                    return Ok(user);
+                    if (result != null)
+                    {
+                        return Ok(result);
+                    }
+                    else
+                    {
+                        return BadRequest("TODO: OPERATION FAILED");
+                    }
                 }
                 return BadRequest("Invalid Model");
             }

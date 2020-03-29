@@ -15,6 +15,6 @@ namespace MessagingWebApi.Models
 
 
         public virtual ICollection<User> Friends { get; set; }
-        public virtual  ICollection<Chat> Converstaions { get; set; }
+        public virtual ICollection<Chat> Converstaions { get; set; }
     }
 }

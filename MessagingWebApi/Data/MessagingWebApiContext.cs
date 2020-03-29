@@ -16,6 +16,6 @@ namespace MessagingWebApi.Data
 
         public DbSet<MessagingWebApi.Models.User> Users { get; set; }
         public DbSet<MessagingWebApi.Models.Message> Messages { get; set; }
-        public DbSet<MessagingWebApi.Models.Chat> Chats { get; set; }
+        public DbSet<MessagingWebApi.Models.Chat> Chat { get; set; }
     }
 }
