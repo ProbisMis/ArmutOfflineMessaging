@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using MessagingWebApi.Models;
 
 namespace MessagingWebApi.Data
@@ -14,9 +10,9 @@ namespace MessagingWebApi.Data
         {
         }
 
-        public DbSet<MessagingWebApi.Models.User> Users { get; set; }
-        public DbSet<MessagingWebApi.Models.Message> Messages { get; set; }
-        public DbSet<MessagingWebApi.Models.Chat> Chat { get; set; }
-        public DbSet<MessagingWebApi.Models.UserRelationship> UserRelationships { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<Chat> Chats { get; set; }
+        public DbSet<UserRelationship> UserRelationships { get; set; }
     }
 }

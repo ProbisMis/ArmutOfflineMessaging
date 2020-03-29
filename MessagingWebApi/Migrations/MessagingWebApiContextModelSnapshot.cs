@@ -48,7 +48,7 @@ namespace MessagingWebApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Chat");
+                    b.ToTable("Chats");
                 });
 
             modelBuilder.Entity("MessagingWebApi.Models.Message", b =>

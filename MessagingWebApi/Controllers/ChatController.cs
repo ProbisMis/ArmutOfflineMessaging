@@ -42,6 +42,8 @@ namespace MessagingWebApi.Controllers
 
                     var foundChat = await _chatService.GetChat(user, friend);
 
+                    /* Read status update */
+
                     if (foundChat == null)
                     {
                         await _chatService.CreateChat(user, friend);
@@ -76,6 +78,30 @@ namespace MessagingWebApi.Controllers
                     if (!isFriend) return BadRequest("You are no longer friend! ");
 
                     Chat chat = await _chatService.GetChat(user, friend);
+                    return Ok(chat);
+                }
+                return BadRequest("Invalid Model");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex);
+            }
+
+        }
+
+        [HttpGet("{user_id}")]
+        public async Task<IActionResult> GetAllChats(int user_id)
+        {
+            //TODO: Correct return types add logging
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var user = await _userService.GetUserById(user_id);
+                    if (user == null) return BadRequest("User does not exist");
+
+                    List<Chat> chat = await _chatService.GetAllChats(user);
                     return Ok(chat);
                 }
                 return BadRequest("Invalid Model");

@@ -17,13 +17,25 @@ namespace MessagingWebApi.Services
 
         public async Task<Chat> GetChat(User sender, User reciever)
         {
-            var isChatInitiliazed =  _context.Chat.Where(
+            if (_context.Chats.Count() == 0) return null;
+            var isChatInitiliazed =  _context.Chats.Where(
                         x =>
                         (
-                            x.RecieverId == reciever.Id && x.SenderId == sender.Id) ||
-                            (x.RecieverId == sender.Id && x.SenderId == reciever.Id)
+                            (x.RecieverId == reciever.Id && x.SenderId == sender.Id) ||
+                            (x.RecieverId == sender.Id && x.SenderId == reciever.Id))
                         ).First();
+            isChatInitiliazed.Messages = _context.Messages.Where(x => x.ChatId == isChatInitiliazed.Id).ToList();
             return isChatInitiliazed;
+        }
+
+        public async Task<List<Chat>> GetAllChats(User user)
+        {
+            var result = _context.Chats.Where(
+                         x =>
+                         (
+                             (x.RecieverId == user.Id || x.SenderId == user.Id))
+                         ).ToList();
+            return result;
         }
 
         public async Task<Chat> CreateChat(User sender, User reciever)
@@ -36,12 +48,6 @@ namespace MessagingWebApi.Services
                 CreatedDate = DateTime.Now,
                 IsBlocked = false
             }).Entity;
-            chat.Messages = new List<Message>();
-
-            if (sender.Chats == null)
-                sender.Chats = new List<Chat>();
-            if (reciever.Chats == null)
-                reciever.Chats = new List<Chat>();
 
             sender.Chats.Add(chat);
             reciever.Chats.Add(chat);

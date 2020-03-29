@@ -98,16 +98,8 @@ namespace MessagingWebApi.Services
                 if (result != null && result.Count == 0) return null;
 
                 User firstUser = user, secondUser = friend;
-                if (user.Id < friend.Id)
-                {
-                    firstUser = user;
-                    secondUser = friend;
-                }
-                else
-                {
-                    firstUser = friend;
-                    secondUser = user;
-                }
+                CalculateFirstUser(user, friend, out firstUser, out secondUser);
+              
                 var relation = new UserRelationship()
                 {
                     UserId = firstUser.Id,
@@ -133,18 +125,14 @@ namespace MessagingWebApi.Services
             {
                 var isFriend = false;
                 if (IsFirstUser(userId,friendId))
-                {
                      isFriend = _context.UserRelationships.Select(z => z.UserId == userId).First();
-                }
                 else
-                {
                      isFriend = _context.UserRelationships.Select(z => z.UserId == friendId).First();
-                }
-                return true;
+                
+                return isFriend;
             }
             catch (Exception ex)
             {
-
                 return false;
             }
         }
@@ -153,14 +141,25 @@ namespace MessagingWebApi.Services
             {
 
                 if (userId < friendId)
-                {
                     return true;
-                }
                 else
-                {
                     return false;
-                }
             }
+
+        public void CalculateFirstUser(User user, User friend, out User firstUser, out User secondUser)
+        {
+
+            if (user.Id < friend.Id)
+            {
+                firstUser = user;
+                secondUser = friend;
+            }
+            else
+            {
+                firstUser = friend;
+                secondUser = user;
+            }
+        }
 
 
     }

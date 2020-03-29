@@ -25,6 +25,8 @@ namespace MessagingWebApi.Controllers
             _userService = userService;
             _messageService = messageService;
         }
+
+        [HttpPost]
         public async Task<IActionResult> CreateMessage([FromBody] MessageRequestDto request)
         {
             //TODO: Correct return types add logging

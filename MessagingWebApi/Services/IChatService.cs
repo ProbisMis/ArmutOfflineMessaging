@@ -11,5 +11,6 @@ namespace MessagingWebApi.Services
         public Task<Chat> GetChat(User sender, User reciever);
         public Task<Chat> CreateChat(User sender, User reciever);
         public Task<Chat> UpdateChat(Chat chat);
-    }
+        public Task<List<Chat>> GetAllChats(User user);
+     }
 }

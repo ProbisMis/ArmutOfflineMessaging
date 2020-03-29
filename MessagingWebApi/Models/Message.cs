@@ -15,6 +15,8 @@ namespace MessagingWebApi.Models
         public bool IsRead { get; set; }
         public DateTime? ReadDate { get; set; }
         public bool IsDeleted { get; set; }
+        public int ChatId { get; set; }
+
 
     }
 }
