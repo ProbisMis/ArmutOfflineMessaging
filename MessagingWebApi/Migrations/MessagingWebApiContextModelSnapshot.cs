@@ -48,6 +48,8 @@ namespace MessagingWebApi.Migrations
 
                     b.HasIndex("UserId");
 
+                    b.HasIndex("SenderId");
+
                     b.ToTable("Chat");
                 });
 

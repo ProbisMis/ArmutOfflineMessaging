@@ -27,24 +27,6 @@ namespace MessagingWebApi.Controllers
             return Ok(_context.Users.ToList());
         }
 
-        //// GET: Users/Details/5
-        //public async Task<IActionResult> Details(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var user = await _context.Users
-        //        .FirstOrDefaultAsync(m => m.Id == id);
-        //    if (user == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return View(user);
-        //}
-
         // POST: Users/Create
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] User user)
@@ -88,15 +70,79 @@ namespace MessagingWebApi.Controllers
                  
                     if (!result) return BadRequest("User does not exist");
 
-                    result = _context.Users.Any(x => x.Password == user.Password && x.Username == user.Username);
+                    var foundUser = _context.Users.Where(x => x.Password == user.Password && x.Username == user.Username).ToList();
 
-                    if (!result) return BadRequest("Password does not match");
+                    if (foundUser == null && foundUser.Count == 0) return BadRequest("Password does not match");
 
                     //hash password 
-                    user.LastLoginDate = DateTime.Now;
+                    foundUser.FirstOrDefault().LastLoginDate = DateTime.Now;
+                    _context.Update(foundUser.FirstOrDefault());
+                    await _context.SaveChangesAsync();
+                    return Ok(foundUser);
+                }
+                return BadRequest("Invalid Model");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex);
+            }
+
+        }
+
+        // GET: Users/Friends
+        [HttpGet("friends/{user_id}")]
+        public async Task<IActionResult> Friends(int user_id)
+        {
+            //TODO: Correct return types add logging
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var user = _context.Users.Find(user_id);
+                    if (user == null) return BadRequest("User does not exist");
+
+                    return Ok(user);
+                }
+                return BadRequest("Invalid Model");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex);
+            }
+
+        }
+
+        // POST: Users/Friends
+        [HttpPost("friends")]
+        public async Task<IActionResult> AddFriend([FromBody] FriendRequestDto request)
+        {   
+
+            //TODO: Correct return types add logging
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    int user_id = request.user_id;
+                    int friend_id = request.friend_id;
+
+                    var user = _context.Users.Find(user_id);
+                    if (user == null) return BadRequest("User does not exist");
+
+                    var friend = _context.Users.Find(friend_id);
+                    if (friend == null) return BadRequest("User does not exist");
+
+                    var isFriend = _context.Users.Any(x => x.Friends.Any(z => z.Id == friend_id));
+
+                    //Not a good place
+                    if (user.Friends == null)
+                        user.Friends = new List<User>();
+
+                    user.Friends.Add(friend);
                     _context.Update(user);
                     await _context.SaveChangesAsync();
-                    return Ok("Logged In");
+                    return Ok(user);
                 }
                 return BadRequest("Invalid Model");
             }
