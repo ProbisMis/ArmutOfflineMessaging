@@ -15,5 +15,10 @@ namespace MessagingWebApi.Models
         public bool IsBlocked { get; set; }
 
         public virtual ICollection<Message> Messages { get; set; }
+
+        public Chat()
+        {
+            this.Messages = new HashSet<Message>();
+        }
     }
 }

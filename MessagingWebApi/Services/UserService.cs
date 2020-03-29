@@ -20,7 +20,7 @@ namespace MessagingWebApi.Services
         {
             var result = _context.Users.Where(x => x.Username == user.Username).ToList();
 
-            if (result != null && result.Count == 0) return null;
+            if (result != null && result.Count > 0) return null;
 
             //hash password 
             user.CreatedDate = DateTime.Now;
@@ -38,7 +38,7 @@ namespace MessagingWebApi.Services
 
             if (result != null && result.Count == 0) return null;
 
-            _context.Add(user);
+            _context.Update(user);
             await _context.SaveChangesAsync();
 
             return user;
@@ -47,36 +47,24 @@ namespace MessagingWebApi.Services
         public async Task<User> GetUserById(int userId)
         {
             var result = _context.Users.Where(x => x.Id == userId).FirstOrDefault();
-
-            if (result != null) return null;
-
             return result;
         }
 
         public async Task<User> GetUserByUsername(string username)
         {
             var result = _context.Users.Where(x => x.Username == username).FirstOrDefault();
-
-            if (result == null) return null;
-
             return result;
         }
 
         public async Task<List<User>> GetAllUsers()
         {
             var result = _context.Users.ToList();
-
-            if (result == null) return null;
-
             return result;
         }
 
         public async Task<User> CheckUsernamePassword(string username, string password)
         {
             var result = _context.Users.Where(x => x.Username == username && x.Password == password).FirstOrDefault();
-
-            if (result == null) return null;
-
             return result;
         }
 

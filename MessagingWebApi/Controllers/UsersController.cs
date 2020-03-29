@@ -70,14 +70,14 @@ namespace MessagingWebApi.Controllers
                     //var result = _context.Users.Any(o => o.Username == user.Username);
                     //if (!result) return BadRequest("User does not exist");
                     var foundUser = _userService.GetUserByUsername(user.Username).Result;
-                    if (foundUser == null) return BadRequest("User does not exist");
+                    if (foundUser == null) return NotFound("user not found");
                     var foundUser1 = _userService.CheckUsernamePassword(user.Username, user.Password).Result;
-                    if (foundUser1 == null) return BadRequest("User/pass does not match");
+                    if (foundUser1 == null) return NotFound("username and Password does not match");
                     
                     //var foundUser = _context.Users.Where(x => x.Password == user.Password && x.Username == user.Username).First();
                     //if (foundUser == null) return BadRequest("user Does not exist");
                     
-                    foundUser1.LastLoginDate = DateTime.Now;
+                    foundUser.LastLoginDate = DateTime.Now;
                     var updatedUser = await _userService.UpdateUser(foundUser);
                     return Ok(updatedUser);
                 }
@@ -100,10 +100,10 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user = _userService.GetUserById(userId);
+                    var user = _userService.GetUserById(userId).Result;
                     if (user == null) return BadRequest("User does not exist");
 
-                    return Ok(user.Result.Friends);
+                    return Ok(user);
                 }
                 return BadRequest("Invalid Model");
             }

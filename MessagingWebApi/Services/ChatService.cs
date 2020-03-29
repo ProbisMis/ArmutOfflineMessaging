@@ -38,13 +38,13 @@ namespace MessagingWebApi.Services
             }).Entity;
             chat.Messages = new List<Message>();
 
-            if (sender.Converstaions == null)
-                sender.Converstaions = new List<Chat>();
-            if (reciever.Converstaions == null)
-                reciever.Converstaions = new List<Chat>();
+            if (sender.Chats == null)
+                sender.Chats = new List<Chat>();
+            if (reciever.Chats == null)
+                reciever.Chats = new List<Chat>();
 
-            sender.Converstaions.Add(chat);
-            reciever.Converstaions.Add(chat);
+            sender.Chats.Add(chat);
+            reciever.Chats.Add(chat);
             _context.Update(sender);
             _context.Update(reciever);
             await _context.SaveChangesAsync();
