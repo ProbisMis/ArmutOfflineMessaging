@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
 using MessagingWebApi.Services;
+using NLog.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+using NLog;
 
 namespace MessagingWebApi.Controllers
 {
@@ -16,17 +19,33 @@ namespace MessagingWebApi.Controllers
     public class UsersController : Controller
     {
         private readonly IUserService _userService;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, ILogger<UsersController> logger)
         {
             _userService = userService;
-
-       
+            _logger = logger;
         }
 
         // GET: Users
         public async Task<IActionResult> Index()
         {
+            try
+            {
+                int zero = 0;
+                int result = 5 / zero;
+            }
+            catch (DivideByZeroException ex)
+            {
+                // get a Logger object and log exception here using NLog. 
+                // this will use the "databaseLogger" logger from our NLog.config file
+                Logger logger = LogManager.GetLogger("databaseLogger");
+
+                // add custom message and pass in the exception
+                logger.Error(ex, "Whoops!");
+            }
+
+            _logger.LogInformation("UsersController.Index method called!!!");
             return Ok(await _userService.GetAllUsers());
         }
 
