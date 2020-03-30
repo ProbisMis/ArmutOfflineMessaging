@@ -13,8 +13,6 @@ namespace MessagingWebApi.Services
         public ChatService(MessagingWebApiContext context)
         {
             _context = context;
-
-
         }
 
         public async Task<Chat> GetChat(User sender, User reciever)
@@ -41,9 +39,11 @@ namespace MessagingWebApi.Services
                          (
                              (x.RecieverId == user.Id || x.SenderId == user.Id))
                          ).ToList();
-            
-            
-            return user.Chats.ToList();
+            //await _context.Entry(user).Collection(s => s.Chats).LoadAsync();
+            //var updatedUser = _context.Users.Where(x => x.Username == user.Username).First();
+            //return updatedUser.Chats.ToList();
+
+            return result;
         }
 
         public async Task<Chat> CreateChat(User sender, User reciever)

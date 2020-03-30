@@ -137,7 +137,49 @@ namespace MessagingWebApi.Services
             }
         }
 
-          public bool IsFirstUser(int userId , int friendId)
+        public async Task<bool> IsBlocked(int userId, int friendId)
+        {
+            try
+            {
+                UserRelationship relation;
+                if (IsFirstUser(userId, friendId))
+                    relation = _context.UserRelationships.Where(z => z.UserId == userId).First();
+                else
+                    relation = _context.UserRelationships.Where(z => z.UserId == friendId).First();
+                
+                if (relation.IsBlocked)
+                    return true;
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<string> BlockFriend(User user, User friend)
+        {
+
+            try
+            {
+                User user1, user2;
+                CalculateFirstUser(user, friend, out user1, out user2);
+                var relation = _context.UserRelationships.Where(x => x.UserId == user1.Id).FirstOrDefault();
+                relation.IsBlocked = true;
+                _context.Update(relation);
+                await _context.SaveChangesAsync();
+                return "success";
+            }
+            catch (Exception ex)
+            {
+
+                return ex.Message;
+            }
+          
+        }
+
+        public bool IsFirstUser(int userId , int friendId)
             {
 
                 if (userId < friendId)

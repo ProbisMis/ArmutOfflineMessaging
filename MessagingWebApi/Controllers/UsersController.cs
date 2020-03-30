@@ -46,7 +46,7 @@ namespace MessagingWebApi.Controllers
                         return NotFound(typeof(User));
                     }
                     //Assert
-                   
+
                 }
                 return BadRequest("Invalid Model");
             }
@@ -55,7 +55,7 @@ namespace MessagingWebApi.Controllers
 
                 return BadRequest(ex);
             }
-           
+
         }
 
         // POST: Users/Login
@@ -73,10 +73,10 @@ namespace MessagingWebApi.Controllers
                     if (foundUser == null) return NotFound("user not found");
                     var foundUser1 = _userService.CheckUsernamePassword(user.Username, user.Password).Result;
                     if (foundUser1 == null) return NotFound("username and Password does not match");
-                    
+
                     //var foundUser = _context.Users.Where(x => x.Password == user.Password && x.Username == user.Username).First();
                     //if (foundUser == null) return BadRequest("user Does not exist");
-                    
+
                     foundUser.LastLoginDate = DateTime.Now;
                     var updatedUser = await _userService.UpdateUser(foundUser);
                     return Ok(updatedUser);
@@ -103,6 +103,30 @@ namespace MessagingWebApi.Controllers
                     var user = _userService.GetFriends(userId).Result;
                     if (user == null) return BadRequest("User does not exist");
 
+                    return Ok(user);
+                }
+                return BadRequest("Invalid Model");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex);
+            }
+
+        }
+
+        // GET: Users/Friends
+        [HttpPost("block/{userId}")]
+        public async Task<IActionResult> BlockFriend([FromBody] FriendRequestDto friendRequestDto)
+        {
+            //TODO: Correct return types add logging
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var user =  await _userService.GetUserById(friendRequestDto.user_id);
+                    var friend = await _userService.GetUserById(friendRequestDto.friend_id);
+                    await _userService.BlockFriend(user,friend);
                     return Ok(user);
                 }
                 return BadRequest("Invalid Model");

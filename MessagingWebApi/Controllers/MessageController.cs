@@ -42,6 +42,9 @@ namespace MessagingWebApi.Controllers
                     var isFriend = await _userService.IsFriend(user.Id, friend.Id);
                     if (!isFriend) return BadRequest("You are no longer friends");
 
+                    var isBlocked = await _userService.IsBlocked(user.Id, friend.Id);
+                    if (isBlocked) return BadRequest("You are blocked"); //TODO: User should not see this!
+
                     Chat chat = await _chatService.GetChat(user, friend);
                     
                     if (chat == null)
