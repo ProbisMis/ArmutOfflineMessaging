@@ -52,7 +52,7 @@ namespace MessagingWebApi.Controllers
                         chat = await _chatService.CreateChat(user, friend);
                     }
              
-                    var message = await _messageService.InsertMessage(user, friend, request.MessageBody);
+                    var message = await _messageService.InsertMessage(user, friend, request.MessageBody,  chat);
                     chat.Messages.Add(message);
 
                     await _chatService.UpdateChat(chat);

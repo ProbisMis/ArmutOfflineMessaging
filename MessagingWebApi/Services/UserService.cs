@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MessagingWebApi.Services
 {
@@ -14,6 +15,10 @@ namespace MessagingWebApi.Services
         public UserService(MessagingWebApiContext context)
         {
             _context = context;
+
+            _context.Users
+                   .Include(b => b.Chats)
+                   .ToList();
         }
 
         public  async Task<User> InsertUser(User user)
@@ -125,9 +130,9 @@ namespace MessagingWebApi.Services
             {
                 var isFriend = false;
                 if (IsFirstUser(userId,friendId))
-                     isFriend = _context.UserRelationships.Select(z => z.UserId == userId).First();
+                     isFriend = _context.UserRelationships.Any(z => z.UserId == userId && z.FriendId == friendId);
                 else
-                     isFriend = _context.UserRelationships.Select(z => z.UserId == friendId).First();
+                     isFriend = _context.UserRelationships.Any(z => z.UserId == friendId && z.FriendId == userId);
                 
                 return isFriend;
             }
@@ -143,10 +148,10 @@ namespace MessagingWebApi.Services
             {
                 UserRelationship relation;
                 if (IsFirstUser(userId, friendId))
-                    relation = _context.UserRelationships.Where(z => z.UserId == userId).First();
+                    relation = _context.UserRelationships.Where(z => z.UserId == userId && z.FriendId == friendId)?.First();
                 else
-                    relation = _context.UserRelationships.Where(z => z.UserId == friendId).First();
-                
+                    relation = _context.UserRelationships.Where(z => z.UserId == friendId && z.FriendId == userId)?.First();
+
                 if (relation.IsBlocked)
                     return true;
 
@@ -165,7 +170,7 @@ namespace MessagingWebApi.Services
             {
                 User user1, user2;
                 CalculateFirstUser(user, friend, out user1, out user2);
-                var relation = _context.UserRelationships.Where(x => x.UserId == user1.Id).FirstOrDefault();
+                var relation = _context.UserRelationships.Where(x => x.UserId == user1.Id && x.FriendId == user2.Id).FirstOrDefault();
                 relation.IsBlocked = true;
                 _context.Update(relation);
                 await _context.SaveChangesAsync();

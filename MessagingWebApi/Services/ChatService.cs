@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace MessagingWebApi.Services
 {
@@ -13,21 +14,27 @@ namespace MessagingWebApi.Services
         public ChatService(MessagingWebApiContext context)
         {
             _context = context;
+
+            //Lazy load
+            _context.Chats
+                        .Include(b => b.Messages)
+                        .ToList();
         }
 
         public async Task<Chat> GetChat(User sender, User reciever)
         {
             if (_context.Chats.Count() == 0) return null;
+
             var isChatInitiliazed =  _context.Chats.Where(
                         x =>
                         (
                             (x.RecieverId == reciever.Id && x.SenderId == sender.Id) ||
                             (x.RecieverId == sender.Id && x.SenderId == reciever.Id))
-                        ).First();
-            _context.Entry(isChatInitiliazed).Collection(s => s.Messages).Load();
-            await _context.SaveChangesAsync();
+                        )?.FirstOrDefault();
+            //_context.Entry(isChatInitiliazed).Collection(s => s.Messages).Load();
+            //await _context.SaveChangesAsync();
 
-            isChatInitiliazed.Messages = _context.Messages.Where(x => x.ChatId == isChatInitiliazed.Id).ToList();
+           // isChatInitiliazed.Messages = _context.Messages.Where(x => x.ChatId == isChatInitiliazed.Id).ToList();
 
             return isChatInitiliazed;
         }
@@ -48,6 +55,7 @@ namespace MessagingWebApi.Services
 
         public async Task<Chat> CreateChat(User sender, User reciever)
         {
+            //TODO: Burda oluştururken kıyasla ID'leri
             var chat = _context.Add(new Chat()
             {
                 ChatGuid = sender.Username + reciever.Username,

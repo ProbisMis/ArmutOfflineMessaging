@@ -20,6 +20,8 @@ namespace MessagingWebApi.Controllers
         public UsersController(IUserService userService)
         {
             _userService = userService;
+
+       
         }
 
         // GET: Users
@@ -116,7 +118,7 @@ namespace MessagingWebApi.Controllers
         }
 
         // GET: Users/Friends
-        [HttpPost("block/{userId}")]
+        [HttpPost("block")]
         public async Task<IActionResult> BlockFriend([FromBody] FriendRequestDto friendRequestDto)
         {
             //TODO: Correct return types add logging

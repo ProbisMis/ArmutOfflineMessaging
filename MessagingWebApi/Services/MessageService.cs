@@ -16,12 +16,12 @@ namespace MessagingWebApi.Services
             _context = context;
         }
 
-        public async Task<Message> InsertMessage(User sender, User reciever, string body)
+        public async Task<Message> InsertMessage(User sender, User reciever, string body, Chat chat)
         {
             //TODO: Correct return types add logging
             try
             {
-                var chat  = _context.Messages.Add(new Message()
+                var messages  = _context.Messages.Add(new Message()
                 {
                     Body = body,
                     SenderId = sender.Id,
@@ -29,10 +29,32 @@ namespace MessagingWebApi.Services
                     CreatedDate = DateTime.Now,
                     IsRead = false,
                     ReadDate = null,
-                    IsDeleted =false
+                    IsDeleted =false,
+                    ChatId = chat.Id,
                 }).Entity;
                 await _context.SaveChangesAsync();
-                return chat;
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+
+        public async Task ReadMessage(User sender, User reciever)
+        {
+            try
+            {
+                var messages = _context.Messages.Where(x => x.SenderId == reciever.Id && x.RecieverId == sender.Id && x.IsRead == false).OrderBy(x => x.CreatedDate);
+                if (messages.Count() == 0) return;
+                foreach (var message in messages.ToList())
+                {
+                    message.IsRead = true;
+                    message.ReadDate = DateTime.Now;
+                    _context.Entry(message).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                }
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {

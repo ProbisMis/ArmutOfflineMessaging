@@ -20,10 +20,12 @@ namespace MessagingWebApi.Controllers
     {
         private readonly IChatService _chatService;
         private readonly IUserService _userService;
-        public ChatController(IChatService chatService, IUserService userService)
+        private readonly IMessageService _messageService;
+        public ChatController(IChatService chatService, IUserService userService, IMessageService messageService)
         {
             _chatService = chatService;
             _userService = userService;
+            _messageService = messageService;
         }
         public async Task<IActionResult> CreateChat([FromBody] FriendRequestDto request)
         {
@@ -46,7 +48,11 @@ namespace MessagingWebApi.Controllers
 
                     if (foundChat == null)
                     {
-                        await _chatService.CreateChat(user, friend);
+                        //FirstId
+                        if (user.Id < friend.Id)
+                            await _chatService.CreateChat(user, friend);
+                        else
+                            await _chatService.CreateChat(friend, user);
                     }
 
                     return Ok(user);
@@ -78,6 +84,7 @@ namespace MessagingWebApi.Controllers
                     if (!isFriend) return BadRequest("You are no longer friend! ");
 
                     Chat chat = await _chatService.GetChat(user, friend);
+                    await _messageService.ReadMessage(user, friend);
                     return Ok(chat);
                 }
                 return BadRequest("Invalid Model");
