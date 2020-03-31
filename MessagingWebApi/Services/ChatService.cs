@@ -21,7 +21,7 @@ namespace MessagingWebApi.Services
 
         public ChatResponseModel GetChat(User sender, User reciever)
         {
-            if (_context.Chats.Count() == 0) return null;
+            if (_context.Chats.Count() == 0) return new ChatResponseModel();
 
             try
             {

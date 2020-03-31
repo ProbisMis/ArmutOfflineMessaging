@@ -18,10 +18,6 @@ namespace MessagingWebApi.Services
         {
             _context = context;
             _logger = logger;
-
-            _context.Users
-                   .Include(b => b.Chats)
-                   .ToList();
         }
 
         public UserResponseModel InsertUser(User user)

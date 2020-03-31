@@ -46,7 +46,7 @@ namespace MessagingWebApi.Controllers
 
                     var chatResponse =  _chatService.GetChat(userModel, friendModel);
                     ChatResponseModel chat;
-                    if (chatResponse.chat == null)
+                    if (chatResponse?.chat == null)
                     {
                         chat = _chatService.CreateChat(userModel, friendModel);
                         if (chat.UserFriendly)
@@ -55,7 +55,7 @@ namespace MessagingWebApi.Controllers
                         }
                         else
                         {
-                            return Ok();
+                            return Ok(chat.chat);
                         }
                     }
 
