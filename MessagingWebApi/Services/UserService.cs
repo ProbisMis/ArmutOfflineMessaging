@@ -46,8 +46,8 @@ namespace MessagingWebApi.Services
                 user.LastLoginDate = DateTime.Now;
                 _ = _context.Add(user);
                 _ = _context.SaveChangesAsync();
-
-                return new UserResponseModel() { user = user };
+                var newUser = _context.Users.Where(x => x.Username == user.Username).First();
+                return new UserResponseModel() { user = newUser };
             }
             catch (Exception ex)
             {
