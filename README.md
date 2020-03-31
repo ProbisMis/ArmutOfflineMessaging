@@ -9,6 +9,10 @@
 * To Verify go to  View - SQL Server Object Explorer - Connect to mssqllocaldb under  `Databases - System Databases - master - Tables`
 * Run ISS Express.
 
+(TEST) Open Postman Set Enviroment variable {{url}} to your localhost and port eg. http://localhost:13420
+ * type `cd projectname`
+ * open up postman .json file
+
 ### Presentation ###
 
 ![Image of Yaktocat](/images/Routes.png)
