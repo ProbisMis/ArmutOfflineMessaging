@@ -8,7 +8,7 @@ namespace MessagingWebApi.Services
 {
     public interface IMessageService
     {
-        public Task<Message> InsertMessage(User sender, User reciever, string body, Chat chat);
+        public ChatResponseModel InsertMessage(User sender, User reciever, string body, Chat chat);
         public Task ReadMessage(User sender, User reciever);
     }
 }

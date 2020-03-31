@@ -34,28 +34,32 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user = await _userService.GetUserById(request.SenderId);
-                    var friend = await _userService.GetUserById(request.RecieverId);
-                    if (user == null) return BadRequest("User does not exist");
-                    if (friend == null) return BadRequest("User does not exist");
+                    var user =  _userService.GetUserById(request.SenderId);
+                    var friend =  _userService.GetUserById(request.RecieverId);
+                    var userModel = user.user;
+                    var friendModel = friend.user;
+                    if (user.UserFriendly) return BadRequest(user);
+                    if (friend.UserFriendly) return BadRequest(friend);
 
-                    var isFriend = await _userService.IsFriend(user.Id, friend.Id);
-                    if (!isFriend) return BadRequest("You are no longer friends");
+                    var isFriend = await _userService.IsFriend(request.SenderId, request.RecieverId);
+                    if (!isFriend) return BadRequest(SystemCustomerFriendlyMessages.FriendNotFound);
 
-                    var isBlocked = await _userService.IsBlocked(user.Id, friend.Id);
-                    if (isBlocked) return BadRequest("You are blocked"); //TODO: User should not see this!
+                    var isBlocked = await _userService.IsBlocked(request.SenderId, request.RecieverId);
+                    if (isBlocked) return Ok(); //TODO: User should not see this!
 
-                    Chat chat = await _chatService.GetChat(user, friend);
+                    ChatResponseModel chatResponse =  _chatService.GetChat(userModel, friendModel);
+                    if (chatResponse.chat == null)
+                        chatResponse = _chatService.CreateChat(userModel, friendModel);
+                    var chat = chatResponse.chat;
+
+                    if (chatResponse.UserFriendly) return BadRequest(chat);
                     
-                    if (chat == null)
-                    {
-                        chat = await _chatService.CreateChat(user, friend);
-                    }
-             
-                    var message = await _messageService.InsertMessage(user, friend, request.MessageBody,  chat);
-                    chat.Messages.Add(message);
+                    var message =  _messageService.InsertMessage(userModel, friendModel, request.MessageBody,  chat);
+                    
+                    //TODO: Uncomment if messages are not updated
+                    //chat.Messages.Add(message);
 
-                    await _chatService.UpdateChat(chat);
+                    //var chatResponse  =  _chatService.UpdateChat(chat);
                     return Ok(chat);
                 }
                 return BadRequest("Invalid Model");

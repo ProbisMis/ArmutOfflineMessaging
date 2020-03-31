@@ -30,20 +30,7 @@ namespace MessagingWebApi.Controllers
         // GET: Users
         public async Task<IActionResult> Index()
         {
-            try
-            {
-                int zero = 0;
-                int result = 5 / zero;
-            }
-            catch (DivideByZeroException ex)
-            {
-                // get a Logger object and log exception here using NLog. 
-                // this will use the "databaseLogger" logger from our NLog.config file
-                Logger logger = LogManager.GetLogger("databaseLogger");
-
-                // add custom message and pass in the exception
-                logger.Error(ex, "Whoops!");
-            }
+    
 
             _logger.LogInformation("UsersController.Index method called!!!");
             return Ok(await _userService.GetAllUsers());
@@ -58,16 +45,12 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var result = await _userService.InsertUser(user);
+                    var result =  _userService.InsertUser(user);
 
-                    if (result != null)
-                        return Ok(result);
+                    if (result.UserFriendly)
+                        return BadRequest(result);
                     else
-                    {
-                        return NotFound(typeof(User));
-                    }
-                    //Assert
-
+                        return Ok(result.user);
                 }
                 return BadRequest("Invalid Model");
             }
@@ -90,17 +73,18 @@ namespace MessagingWebApi.Controllers
                 {
                     //var result = _context.Users.Any(o => o.Username == user.Username);
                     //if (!result) return BadRequest("User does not exist");
-                    var foundUser = _userService.GetUserByUsername(user.Username).Result;
-                    if (foundUser == null) return NotFound("user not found");
-                    var foundUser1 = _userService.CheckUsernamePassword(user.Username, user.Password).Result;
-                    if (foundUser1 == null) return NotFound("username and Password does not match");
+                    var response = _userService.GetUserByUsername(user.Username);
+                    if (response.UserFriendly) return NotFound(response);
+                    var response1 = _userService.CheckUsernamePassword(user.Username, user.Password);
+                    if (response1.UserFriendly) return NotFound(response1);
 
                     //var foundUser = _context.Users.Where(x => x.Password == user.Password && x.Username == user.Username).First();
                     //if (foundUser == null) return BadRequest("user Does not exist");
 
-                    foundUser.LastLoginDate = DateTime.Now;
-                    var updatedUser = await _userService.UpdateUser(foundUser);
-                    return Ok(updatedUser);
+                    response.user.LastLoginDate = DateTime.Now;
+                    var updatedUser = _userService.UpdateUser(response.user);
+                    
+                    return Ok(updatedUser.user);
                 }
                 return BadRequest("Invalid Model");
             }
@@ -145,12 +129,17 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user =  await _userService.GetUserById(friendRequestDto.user_id);
-                    var friend = await _userService.GetUserById(friendRequestDto.friend_id);
-                    await _userService.BlockFriend(user,friend);
-                    return Ok(user);
+                    var user =   _userService.GetUserById(friendRequestDto.user_id);
+                    var friend =  _userService.GetUserById(friendRequestDto.friend_id);
+                    var blocked=  _userService.BlockFriend(user.user,friend.user);
+
+                    if(blocked.UserFriendly)
+                    {
+                        return Ok(blocked);
+                    }
+                    return Ok(blocked.user);
                 }
-                return BadRequest("Invalid Model");
+                return BadRequest(SystemCustomerFriendlyMessages.InvalidModel);
             }
             catch (Exception ex)
             {
@@ -170,26 +159,27 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user = await _userService.GetUserById(request.user_id);
-                    var friend = await _userService.GetUserById(request.friend_id);
-                    if (user == null) return BadRequest("User does not exist");
-                    if (friend == null) return BadRequest("User does not exist");
+                    var user =  _userService.GetUserById(request.user_id);
+                    var friend =  _userService.GetUserById(request.friend_id);
+                    if (user.UserFriendly) return BadRequest(user);
+                    if (friend.UserFriendly) return BadRequest(friend);
                     
-                    var isFriend = await _userService.IsFriend(user.Id, friend.Id);
-                    if (isFriend) return BadRequest("Already friends");
+                    var isFriend = await _userService.IsFriend(request.user_id, request.friend_id);
+                    if (isFriend) return BadRequest(SystemCustomerFriendlyMessages.AlreadyFriend);
                    
-                    var result = await _userService.InsertFriend(user, friend);
+                    var result =  _userService.InsertFriend(user.user, friend.user);
 
-                    if (result != null)
+                    if (result.UserFriendly)
                     {
                         return Ok(result);
                     }
                     else
                     {
-                        return BadRequest("TODO: OPERATION FAILED");
+                        //TODO: Should not be returned to user, already logged to DB, just send internal server error
+                        return StatusCode(500);
                     }
                 }
-                return BadRequest("Invalid Model");
+                return BadRequest(SystemCustomerFriendlyMessages.InvalidModel);
             }
             catch (Exception ex)
             {

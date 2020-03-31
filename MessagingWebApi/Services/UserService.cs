@@ -6,59 +6,158 @@ using MessagingWebApi.Data;
 using MessagingWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace MessagingWebApi.Services
 {
     public class UserService : ControllerBase, IUserService
     {
         private readonly MessagingWebApiContext _context;
-        public UserService(MessagingWebApiContext context)
+        private readonly ILogger<UserService> _logger;
+        public UserService(MessagingWebApiContext context, ILogger<UserService> logger)
         {
             _context = context;
+            _logger = logger;
 
             _context.Users
                    .Include(b => b.Chats)
                    .ToList();
         }
 
-        public  async Task<User> InsertUser(User user)
+        public UserResponseModel InsertUser(User user)
         {
-            var result = _context.Users.Where(x => x.Username == user.Username).ToList();
+            try
+            {
+                var result = _context.Users.Where(x => x.Username == user.Username).ToList();
 
-            if (result != null && result.Count > 0) return null;
+                if (result != null && result.Count > 0)
+                {
+                    _logger.LogWarning(string.Format(SystemCustomerFriendlyMessages.UserFound, user.Username));
+                    return new UserResponseModel()
+                    {
+                        UserFriendly = true,
+                        Message = string.Format(SystemCustomerFriendlyMessages.UserFound, user.Username),
+                        ErrorCode = "400",
+                    };
+                }
+                //hash password 
+                _logger.LogInformation(string.Format(SystemCustomerFriendlyMessages.UserRegister, user.Id));
+                user.CreatedDate = DateTime.Now;
+                user.LastLoginDate = DateTime.Now;
+                _ = _context.Add(user);
+                _ = _context.SaveChangesAsync();
 
-            //hash password 
-            user.CreatedDate = DateTime.Now;
-            user.LastLoginDate = DateTime.Now;
-            _context.Add(user);
-            await _context.SaveChangesAsync();
-
-            return user;
-          
+                return new UserResponseModel() { user = user };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new UserResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
         }
 
-        public async Task<User> UpdateUser(User user)
+        public  UserResponseModel UpdateUser(User user)
         {
-            var result = _context.Users.Where(x => x.Username == user.Username).ToList();
+            try
+            {
+                var result = _context.Users.Where(x => x.Username == user.Username).First();
 
-            if (result != null && result.Count == 0) return null;
-            _context.Entry(user).Collection(s => s.Chats).Load();
-            _context.Update(user);
-            await _context.SaveChangesAsync();
+                if (result == null)
+                {
+                    _logger.LogWarning(string.Format(SystemCustomerFriendlyMessages.UserNotFound, user.Id));
+                    return new UserResponseModel()
+                    {
+                        UserFriendly = false,
+                        Message = string.Format(SystemCustomerFriendlyMessages.UserNotFound, user.Id),
+                        ErrorCode = "400",
+                    };
+                }
 
-            return user;
+                _logger.LogInformation(string.Format(SystemCustomerFriendlyMessages.UserLogin, user.Id));
+                _context.Entry(user).Collection(s => s.Chats).Load(); //TODO: check if needed
+                _context.Update(user); //TODO: check if needed
+                _ = _context.SaveChangesAsync();
+
+                return new UserResponseModel() { user = user };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new UserResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
+            
         }
 
-        public async Task<User> GetUserById(int userId)
+        public UserResponseModel GetUserById(int userId)
         {
-            var result = _context.Users.Where(x => x.Id == userId).FirstOrDefault();
-            return result;
+            try
+            {
+                var result = _context.Users.Where(x => x.Id == userId).First();
+
+                if (result == null)
+                {
+                    _logger.LogWarning(string.Format(SystemCustomerFriendlyMessages.UserNotFound, userId));
+                    return new UserResponseModel()
+                    {
+                        UserFriendly = false,
+                        Message = string.Format(SystemCustomerFriendlyMessages.UserNotFound, userId),
+                        ErrorCode = "400",
+                    };
+                }
+                return new UserResponseModel() { user = result };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new UserResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
+
         }
 
-        public async Task<User> GetUserByUsername(string username)
+        public UserResponseModel GetUserByUsername(string username)
         {
-            var result = _context.Users.Where(x => x.Username == username).FirstOrDefault();
-            return result;
+            try
+            {
+                var result = _context.Users.Where(x => x.Username == username).FirstOrDefault();
+                if (result == null)
+                {
+                    _logger.LogWarning(string.Format(SystemCustomerFriendlyMessages.UserNotFound, username));
+                    return new UserResponseModel()
+                    {
+                        UserFriendly = false,
+                        Message = string.Format(SystemCustomerFriendlyMessages.UserNotFound, username),
+                        ErrorCode = "400",
+                    };
+                }
+
+                return new UserResponseModel() { user = result };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new UserResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
+           
         }
 
         public async Task<List<User>> GetAllUsers()
@@ -69,59 +168,86 @@ namespace MessagingWebApi.Services
 
         public async Task<List<User>> GetFriends(int id)
         {
+            //TODO: Check GetUserById return 
             var relations = _context.UserRelationships.Where(x => (x.FriendId == id || x.UserId == id)).ToList(); //TODO: Çok kötü..
             var distinctUsers = new List<User>();
             foreach (var relation in relations)
             {
-                User tempUser;
+                UserResponseModel tempUser;
                 if (relation.UserId == id)
                 {
-                    tempUser = await GetUserById(relation.FriendId);
-                    distinctUsers.Add(tempUser);
+                    tempUser =  GetUserById(relation.FriendId);
+                    distinctUsers.Add(tempUser.user);
                 }
                 else
                 {
-                    tempUser = await GetUserById(relation.UserId);
-                    distinctUsers.Add(tempUser);
+                    tempUser =  GetUserById(relation.UserId);
+                    distinctUsers.Add(tempUser.user);
                 }
             }
 
             return distinctUsers;
         }
-        public async Task<User> CheckUsernamePassword(string username, string password)
-        {
-            var result = _context.Users.Where(x => x.Username == username && x.Password == password).FirstOrDefault();
-            return result;
-        }
-
-        public async Task<User> InsertFriend(User user, User friend)
+        public UserResponseModel CheckUsernamePassword(string username, string password)
         {
             try
             {
-                var result = _context.Users.Where(x => x.Username == user.Username).ToList();
+                var result = _context.Users.Where(x => x.Username == username && x.Password == password).FirstOrDefault();
+               
+                if (result == null)
+                {
+                    _logger.LogWarning(SystemCustomerFriendlyMessages.UsernamePasswordMatchError);
+                    return new UserResponseModel()
+                    {
+                        UserFriendly = true,
+                        Message = SystemCustomerFriendlyMessages.UsernamePasswordMatchError,
+                        ErrorCode = "400",
+                    };
+                }
 
-                if (result != null && result.Count == 0) return null;
+                return new UserResponseModel() { user = result };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new UserResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
+            
+        }
 
+        public UserResponseModel InsertFriend(User user, User friend)
+        {
+            try
+            {
                 User firstUser = user, secondUser = friend;
                 CalculateFirstUser(user, friend, out firstUser, out secondUser);
               
                 var relation = new UserRelationship()
                 {
                     UserId = firstUser.Id,
-                    FriendId = secondUser.Id
+                    FriendId = secondUser.Id,
+                    IsBlocked = false
                 };
-
+                _logger.LogInformation(string.Format(SystemCustomerFriendlyMessages.UserRelationshipAdd, user.Username, friend.Username));
                 _context.Add(relation);
-                await _context.SaveChangesAsync();
-                return user;
+                _ = _context.SaveChangesAsync();
+                return new UserResponseModel() { user = friend};
             }
             catch (Exception ex)
             {
-
-                throw ex;
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new UserResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
             }
-           
-
         }
 
         public async Task<bool> IsFriend(int userId,int friendId)
@@ -163,25 +289,42 @@ namespace MessagingWebApi.Services
             }
         }
 
-        public async Task<string> BlockFriend(User user, User friend)
+        public UserResponseModel BlockFriend(User user, User friend)
         {
-
             try
             {
                 User user1, user2;
                 CalculateFirstUser(user, friend, out user1, out user2);
-                var relation = _context.UserRelationships.Where(x => x.UserId == user1.Id && x.FriendId == user2.Id).FirstOrDefault();
+                var relation = _context.UserRelationships.Where(x => x.UserId == user1.Id && x.FriendId == user2.Id).First();
+
+                if (relation == null)
+                {
+                    _logger.LogWarning(SystemCustomerFriendlyMessages.FriendNotFound);
+                    return new UserResponseModel()
+                    {
+                        UserFriendly = true,
+                        Message = SystemCustomerFriendlyMessages.FriendNotFound,
+                        ErrorCode = "400",
+                    };
+                }
+
+                _logger.LogInformation(string.Format(SystemCustomerFriendlyMessages.UserRelationshipBlock, user.Username, friend.Username));
                 relation.IsBlocked = true;
                 _context.Update(relation);
-                await _context.SaveChangesAsync();
-                return "success";
+                 _ = _context.SaveChangesAsync();
+                return new UserResponseModel() { user = friend };
             }
             catch (Exception ex)
             {
-
-                return ex.Message;
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new UserResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
             }
-          
+
         }
 
         public bool IsFirstUser(int userId , int friendId)

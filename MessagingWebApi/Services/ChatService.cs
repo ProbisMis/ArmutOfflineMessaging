@@ -5,15 +5,18 @@ using System.Threading.Tasks;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace MessagingWebApi.Services
 {
     public class ChatService : IChatService
     {
         private readonly MessagingWebApiContext _context;
-        public ChatService(MessagingWebApiContext context)
+        private readonly ILogger<ChatService> _logger;
+        public ChatService(MessagingWebApiContext context, ILogger<ChatService> logger)
         {
             _context = context;
+            _logger = logger;
 
             //Lazy load
             _context.Chats
@@ -21,22 +24,45 @@ namespace MessagingWebApi.Services
                         .ToList();
         }
 
-        public async Task<Chat> GetChat(User sender, User reciever)
+        public ChatResponseModel GetChat(User sender, User reciever)
         {
             if (_context.Chats.Count() == 0) return null;
 
-            var isChatInitiliazed =  _context.Chats.Where(
-                        x =>
-                        (
-                            (x.RecieverId == reciever.Id && x.SenderId == sender.Id) ||
-                            (x.RecieverId == sender.Id && x.SenderId == reciever.Id))
-                        )?.FirstOrDefault();
-            //_context.Entry(isChatInitiliazed).Collection(s => s.Messages).Load();
-            //await _context.SaveChangesAsync();
+            try
+            {
+                var isChatInitiliazed = _context.Chats.Where(
+                       x =>
+                       (
+                           (x.RecieverId == reciever.Id && x.SenderId == sender.Id) ||
+                           (x.RecieverId == sender.Id && x.SenderId == reciever.Id))
+                       )?.First();
 
-           // isChatInitiliazed.Messages = _context.Messages.Where(x => x.ChatId == isChatInitiliazed.Id).ToList();
+                if (isChatInitiliazed == null)
+                {
+                    _logger.LogWarning(SystemCustomerFriendlyMessages.ChatNotFound);
+                    return new ChatResponseModel()
+                    {
+                        UserFriendly = false,
+                        Message = SystemCustomerFriendlyMessages.ChatNotFound,
+                        ErrorCode = "400",
+                    };
+                }
+                _context.Entry(isChatInitiliazed)
+                    .Collection(s => s.Messages)
+                    .Load(); //TODO: check if needed
 
-            return isChatInitiliazed;
+                return new ChatResponseModel() { chat = isChatInitiliazed };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new ChatResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
         }
 
         public async Task<List<Chat>> GetAllChats(User user)
@@ -53,33 +79,73 @@ namespace MessagingWebApi.Services
             return result;
         }
 
-        public async Task<Chat> CreateChat(User sender, User reciever)
+        public ChatResponseModel CreateChat(User sender, User reciever)
         {
-            //TODO: Burda oluştururken kıyasla ID'leri
-            var chat = _context.Add(new Chat()
+            try
             {
-                ChatGuid = sender.Username + reciever.Username,
-                SenderId = sender.Id,
-                RecieverId = reciever.Id,
-                CreatedDate = DateTime.Now,
-                IsBlocked = false
-            }).Entity;
+                //TODO: Burda oluştururken kıyasla ID'leri
+                User firstUser; User secondUser;
+                if (sender.Id < reciever.Id)
+                {
+                    firstUser = sender;
+                    secondUser = reciever;
+                }
+                else
+                {
+                    firstUser = reciever;
+                    secondUser = sender;
+                }
 
-            sender.Chats.Add(chat);
-            reciever.Chats.Add(chat);
-            _context.Update(sender);
-            _context.Update(reciever);
-            await _context.SaveChangesAsync();
+                var chat = _context.Add(new Chat()
+                {
+                    ChatGuid = firstUser.Username + secondUser.Username,
+                    SenderId = firstUser.Id,
+                    RecieverId = secondUser.Id,
+                    CreatedDate = DateTime.Now,
+                    IsBlocked = false
+                }).Entity;
 
-            return chat;
+                _logger.LogInformation(string.Format(SystemCustomerFriendlyMessages.ChatCreate, chat.Id));
+                sender.Chats.Add(chat);
+                reciever.Chats.Add(chat);
+                _context.Update(firstUser);
+                _context.Update(secondUser);
+                _ = _context.SaveChangesAsync();
+
+                return new ChatResponseModel() { chat = chat };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new ChatResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
         }
 
-        public async Task<Chat> UpdateChat(Chat chat)
+        public ChatResponseModel UpdateChat(Chat chat)
         {
-            var updatedChat = _context.Update(chat);
-            await _context.SaveChangesAsync();
+            try
+            {
+                var updatedChat = _context.Update(chat).Entity;
+                _ = _context.SaveChangesAsync();
 
-            return updatedChat.Entity;
+                return new ChatResponseModel() { chat = updatedChat};
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new ChatResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
+            }
+           
         }
 
 

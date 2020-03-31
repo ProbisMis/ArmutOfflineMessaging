@@ -5,20 +5,22 @@ using System.Threading.Tasks;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace MessagingWebApi.Services
 {
     public class MessageService : IMessageService
     {
         private readonly MessagingWebApiContext _context;
-        public MessageService(MessagingWebApiContext context)
+        private readonly ILogger<MessageService> _logger;
+        public MessageService(MessagingWebApiContext context, ILogger<MessageService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
-        public async Task<Message> InsertMessage(User sender, User reciever, string body, Chat chat)
+        public  ChatResponseModel InsertMessage(User sender, User reciever, string body, Chat chat)
         {
-            //TODO: Correct return types add logging
             try
             {
                 var messages  = _context.Messages.Add(new Message()
@@ -32,12 +34,21 @@ namespace MessagingWebApi.Services
                     IsDeleted =false,
                     ChatId = chat.Id,
                 }).Entity;
-                await _context.SaveChangesAsync();
-                return messages;
+
+                _logger.LogInformation(string.Format(SystemCustomerFriendlyMessages.UserMessageSend, sender.Id, reciever.Id));
+                _ = _context.SaveChangesAsync();
+
+                return new ChatResponseModel() { chat = chat};
             }
             catch (Exception ex)
             {
-                throw ex;
+                _logger.LogError(string.Format("Exception:  {0}", ex));
+                return new ChatResponseModel()
+                {
+                    UserFriendly = false,
+                    Message = string.Format("Exception:  {0}", ex),
+                    ErrorCode = "500",
+                };
             }
 
         }

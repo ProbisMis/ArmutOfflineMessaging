@@ -34,30 +34,34 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user = await _userService.GetUserById(request.user_id);
-                    var friend = await _userService.GetUserById(request.friend_id);
-                    if (user == null) return BadRequest("User does not exist");
-                    if (friend == null) return BadRequest("User does not exist");
+                    var user =  _userService.GetUserById(request.user_id);
+                    var friend =  _userService.GetUserById(request.friend_id);
+                    var userModel = user.user;
+                    var friendModel = friend.user;
+                    if (user.UserFriendly) return BadRequest(user);
+                    if (friend.UserFriendly) return BadRequest(friend);
 
-                    var isFriend = await _userService.IsFriend(user.Id, friend.Id);
-                    if (!isFriend) return BadRequest("Be friend first");
+                    var isFriend = await _userService.IsFriend(request.user_id, request.friend_id);
+                    if (!isFriend) return BadRequest(SystemCustomerFriendlyMessages.FriendNotFound);
 
-                    var foundChat = await _chatService.GetChat(user, friend);
-
-                    /* Read status update */
-
-                    if (foundChat == null)
+                    var chatResponse =  _chatService.GetChat(userModel, friendModel);
+                    ChatResponseModel chat;
+                    if (chatResponse.chat == null)
                     {
-                        //FirstId
-                        if (user.Id < friend.Id)
-                            await _chatService.CreateChat(user, friend);
+                        chat = _chatService.CreateChat(userModel, friendModel);
+                        if (chat.UserFriendly)
+                        {
+                            return BadRequest(chat);
+                        }
                         else
-                            await _chatService.CreateChat(friend, user);
+                        {
+                            return Ok();
+                        }
                     }
 
                     return Ok(user);
                 }
-                return BadRequest("Invalid Model");
+                return BadRequest(SystemCustomerFriendlyMessages.InvalidModel);
             }
             catch (Exception ex)
             {
@@ -70,22 +74,21 @@ namespace MessagingWebApi.Controllers
         [HttpGet("{user_id}/{friend_id}")]
         public async Task<IActionResult> GetChat(int user_id, int friend_id)
         {
-            //TODO: Correct return types add logging
             try
             {
                 if (ModelState.IsValid)
                 {
-                    var user = await _userService.GetUserById(user_id);
-                    var friend = await _userService.GetUserById(friend_id);
-                    if (user == null) return BadRequest("User does not exist");
-                    if (friend == null) return BadRequest("User does not exist");
+                    var user =  _userService.GetUserById(user_id);
+                    var friend =  _userService.GetUserById(friend_id);
+                    if (user.UserFriendly) return BadRequest(user);
+                    if (friend.UserFriendly) return BadRequest(friend);
 
-                    var isFriend = await _userService.IsFriend(user.Id, friend.Id);
-                    if (!isFriend) return BadRequest("You are no longer friend! ");
+                    var isFriend = await _userService.IsFriend(user.user.Id, friend.user.Id);
+                    if (!isFriend) return BadRequest(SystemCustomerFriendlyMessages.FriendNotFound);
 
-                    Chat chat = await _chatService.GetChat(user, friend);
-                    await _messageService.ReadMessage(user, friend);
-                    return Ok(chat);
+                    ChatResponseModel chat =  _chatService.GetChat(user.user, friend.user);
+                    await _messageService.ReadMessage(user.user, friend.user);
+                    return Ok(chat.chat);
                 }
                 return BadRequest("Invalid Model");
             }
@@ -105,10 +108,10 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user = await _userService.GetUserById(user_id);
-                    if (user == null) return BadRequest("User does not exist");
+                    var user =  _userService.GetUserById(user_id);
+                    if (user.UserFriendly) return BadRequest(user);
 
-                    List<Chat> chat = await _chatService.GetAllChats(user);
+                    List<Chat> chat = await _chatService.GetAllChats(user.user);
                     return Ok(chat);
                 }
                 return BadRequest("Invalid Model");
