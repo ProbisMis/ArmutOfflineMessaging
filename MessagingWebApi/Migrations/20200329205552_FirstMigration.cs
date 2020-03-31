@@ -110,8 +110,6 @@ namespace MessagingWebApi.Migrations
                 });
             
 
-
-
             /*v  CREATE TABLE[dbo].[system_logging]
                [Id] INT  IDENTITY(1, 1) NOT NULL,
 
