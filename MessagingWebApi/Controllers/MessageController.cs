@@ -9,6 +9,7 @@ using MessagingWebApi.Models;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
 using MessagingWebApi.Services;
+using Microsoft.Extensions.Logging;
 
 namespace MessagingWebApi.Controllers
 {
@@ -19,17 +20,18 @@ namespace MessagingWebApi.Controllers
         private readonly IUserService _userService;
         private readonly IChatService _chatService;
         private readonly IMessageService _messageService;
-        public MessageController(IChatService chatService, IUserService userService, IMessageService messageService)
+        private readonly ILogger<MessageController> _logger;
+        public MessageController(IChatService chatService, IUserService userService, IMessageService messageService, ILogger<MessageController> logger)
         {
             _chatService = chatService;
             _userService = userService;
             _messageService = messageService;
+            _logger = logger;
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateMessage([FromBody] MessageRequestDto request)
         {
-            //TODO: Correct return types add logging
             try
             {
                 if (ModelState.IsValid)
@@ -45,7 +47,7 @@ namespace MessagingWebApi.Controllers
                     if (!isFriend) return BadRequest(SystemCustomerFriendlyMessages.FriendNotFound);
 
                     var isBlocked = await _userService.IsBlocked(request.SenderId, request.RecieverId);
-                    if (isBlocked) return Ok(); //TODO: User should not see this!
+                    if (isBlocked) return Ok(); 
 
                     ChatResponseModel chatResponse =  _chatService.GetChat(userModel, friendModel);
                     if (chatResponse.chat == null)
@@ -66,8 +68,8 @@ namespace MessagingWebApi.Controllers
             }
             catch (Exception ex)
             {
-
-                return BadRequest(ex);
+                _logger.LogError(string.Format("Exception: {0}", ex));
+                return StatusCode(500);
             }
 
         }

@@ -79,8 +79,8 @@ namespace MessagingWebApi.Services
                 }
 
                 _logger.LogInformation(string.Format(SystemCustomerFriendlyMessages.UserLogin, user.Id));
-                _context.Entry(user).Collection(s => s.Chats).Load(); //TODO: check if needed
-                _context.Update(user); //TODO: check if needed
+                _context.Entry(user).Collection(s => s.Chats).Load();
+                _context.Update(user); 
                 _ = _context.SaveChangesAsync();
 
                 return new UserResponseModel() { user = user };

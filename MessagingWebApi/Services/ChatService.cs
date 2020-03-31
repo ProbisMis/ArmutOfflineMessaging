@@ -17,11 +17,6 @@ namespace MessagingWebApi.Services
         {
             _context = context;
             _logger = logger;
-
-            //Lazy load
-            _context.Chats
-                        .Include(b => b.Messages)
-                        .ToList();
         }
 
         public ChatResponseModel GetChat(User sender, User reciever)
@@ -49,7 +44,7 @@ namespace MessagingWebApi.Services
                 }
                 _context.Entry(isChatInitiliazed)
                     .Collection(s => s.Messages)
-                    .Load(); //TODO: check if needed
+                    .Load();
 
                 return new ChatResponseModel() { chat = isChatInitiliazed };
             }
@@ -83,7 +78,6 @@ namespace MessagingWebApi.Services
         {
             try
             {
-                //TODO: Burda oluştururken kıyasla ID'leri
                 User firstUser; User secondUser;
                 if (sender.Id < reciever.Id)
                 {

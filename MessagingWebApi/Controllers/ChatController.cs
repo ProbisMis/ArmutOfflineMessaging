@@ -9,8 +9,7 @@ using MessagingWebApi.Models;
 using MessagingWebApi.Data;
 using MessagingWebApi.Models;
 using MessagingWebApi.Services;
-
-
+using Microsoft.Extensions.Logging;
 
 namespace MessagingWebApi.Controllers
 {
@@ -21,15 +20,16 @@ namespace MessagingWebApi.Controllers
         private readonly IChatService _chatService;
         private readonly IUserService _userService;
         private readonly IMessageService _messageService;
-        public ChatController(IChatService chatService, IUserService userService, IMessageService messageService)
+        private readonly ILogger<ChatController> _logger;
+        public ChatController(IChatService chatService, IUserService userService, IMessageService messageService, ILogger<ChatController> logger)
         {
             _chatService = chatService;
             _userService = userService;
             _messageService = messageService;
+            _logger = logger;
         }
         public async Task<IActionResult> CreateChat([FromBody] FriendRequestDto request)
         {
-            //TODO: Correct return types add logging
             try
             {
                 if (ModelState.IsValid)
@@ -66,7 +66,8 @@ namespace MessagingWebApi.Controllers
             catch (Exception ex)
             {
 
-                return BadRequest(ex);
+                _logger.LogError(string.Format("Exception: {0}", ex));
+                return StatusCode(500);
             }
 
         }
@@ -94,8 +95,8 @@ namespace MessagingWebApi.Controllers
             }
             catch (Exception ex)
             {
-
-                return BadRequest(ex);
+                _logger.LogError(string.Format("Exception: {0}", ex));
+                return StatusCode(500);
             }
 
         }
@@ -103,7 +104,6 @@ namespace MessagingWebApi.Controllers
         [HttpGet("{user_id}")]
         public async Task<IActionResult> GetAllChats(int user_id)
         {
-            //TODO: Correct return types add logging
             try
             {
                 if (ModelState.IsValid)
@@ -118,8 +118,8 @@ namespace MessagingWebApi.Controllers
             }
             catch (Exception ex)
             {
-
-                return BadRequest(ex);
+                _logger.LogError(string.Format("Exception: {0}", ex));
+                return StatusCode(500);
             }
 
         }
