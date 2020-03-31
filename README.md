@@ -44,8 +44,10 @@ Start Chat
 Send Message 
 ![Chat2](/images/message1.png)
 
+
 Send Message - swap users
 ![Chat3](/images/message2.png)
+
 
 Get Message - If reciever recieves messages via GetChat function. Read status is updated. According to whose reading.
 ![Chat4](/images/message3.png)
