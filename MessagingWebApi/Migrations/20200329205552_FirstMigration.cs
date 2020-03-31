@@ -88,6 +88,55 @@ namespace MessagingWebApi.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "system_logging",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    log_date = table.Column<string>(nullable: true),
+                    log_level = table.Column<string>(nullable: true),
+                    log_logger = table.Column<string>(nullable: true),
+                    log_message = table.Column<string>(nullable: true),
+                    log_user_name = table.Column<string>(nullable: true),
+                    log_call_site = table.Column<string>(nullable: true),
+                    log_thread = table.Column<string>(nullable: true),
+                    log_exception = table.Column<string>(nullable: true),
+                    log_stacktrace = table.Column<string>(nullable: true),
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_system_logging", x => x.Id);
+                });
+            
+
+
+
+            /*v  CREATE TABLE[dbo].[system_logging]
+               [Id] INT  IDENTITY(1, 1) NOT NULL,
+
+            [log_date]       TEXT NULL,
+
+            [log_level]      TEXT NULL,
+
+            [log_logger]     TEXT NULL,
+
+            [log_message]    TEXT NULL,
+
+            [log_user_name]  TEXT NULL,
+
+            [log_call_site]  TEXT NULL,
+
+            [log_thread]     TEXT NULL,
+
+            [log_exception]  TEXT NULL,
+
+            [log_stacktrace] TEXT NULL,
+            PRIMARY KEY CLUSTERED([Id] ASC)
+            );
+            */
+
+
             migrationBuilder.CreateIndex(
                 name: "IX_Chats_UserId",
                 table: "Chats",
