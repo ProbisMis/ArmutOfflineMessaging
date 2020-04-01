@@ -40,33 +40,50 @@ Thanks.
 API Routes List
 ![routes](/images/routes1.png)
 
-Register
-![register](/images/register.png)
+#### GET Methods ####
+Replace port, user_id, friend_id
 
-A sample register error, user already exist
-![register](/images/registererror1.png)
+GET All Friends, friend list.
+http://localhost:port/api/user/friends/user_id
 
-Login
-![Login](/images/login.png)
+GET Chat is used for reading messages. Order of ID's matters in order to update read status. 
+http://localhost:port/api/chat/user_id/friend_id
 
+GET Get All Chats, doesnt update read status. It will get all open chats of user.
+http://localhost:port/api/chat/user_id
+
+#### POST Methods ####
+
+Register,Login can be used by filling Username and Password are in Postman. 
+```json
+{
+	"Username" :"TEST",
+	"Password" :"123"
+}
+```
 A sample response for login will return user data
 ![user data](/images/loginresult.png)
 
 A sample response for login error
 ![user data](/images/loginerror1.png)
 
-Add Friend
-![addfriend](/images/addfriend.png)
-
-All Friends
-![friends](/images/allfriends.png)
-
-Start Chat 
-![Chat1](/images/allfriends.png)
+Add Friend, Block Friend, Start Chat are using below parameters.
+* user_id is sender, friend_id is reciever. 
+```json
+{
+	"user_id" :1,
+	"friend_id" :1002
+}
+```
 
 Send Message 
-![Chat2](/images/message1.png)
-
+```json
+{
+	"message_body" : "Hello 1!",
+	"user_id" :1002,
+	"friend_id" :1
+}
+```
 
 Send Message - swap users
 ![Chat3](/images/message2.png)
