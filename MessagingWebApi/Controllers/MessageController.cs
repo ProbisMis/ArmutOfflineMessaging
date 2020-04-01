@@ -36,17 +36,17 @@ namespace MessagingWebApi.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var user =  _userService.GetUserById(request.SenderId);
-                    var friend =  _userService.GetUserById(request.RecieverId);
+                    var user =  _userService.GetUserById(request.user_id);
+                    var friend =  _userService.GetUserById(request.friend_id);
                     var userModel = user.user;
                     var friendModel = friend.user;
                     if (user.UserFriendly) return BadRequest(user);
                     if (friend.UserFriendly) return BadRequest(friend);
 
-                    var isFriend = await _userService.IsFriend(request.SenderId, request.RecieverId);
+                    var isFriend = await _userService.IsFriend(request.user_id, request.friend_id);
                     if (!isFriend) return BadRequest(SystemCustomerFriendlyMessages.FriendNotFound);
 
-                    var isBlocked = await _userService.IsBlocked(request.SenderId, request.RecieverId);
+                    var isBlocked = await _userService.IsBlocked(request.user_id, request.friend_id);
                     if (isBlocked) return Ok(); 
 
                     ChatResponseModel chatResponse =  _chatService.GetChat(userModel, friendModel);
@@ -56,7 +56,7 @@ namespace MessagingWebApi.Controllers
 
                     if (chatResponse.UserFriendly) return BadRequest(chat);
                     
-                    var message =  _messageService.InsertMessage(userModel, friendModel, request.MessageBody,  chat);
+                    var message =  _messageService.InsertMessage(userModel, friendModel, request.message_body,  chat);
                     
                     //TODO: Uncomment if messages are not updated
                     //chat.Messages.Add(message);

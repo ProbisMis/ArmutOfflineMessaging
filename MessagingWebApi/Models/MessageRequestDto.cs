@@ -7,8 +7,8 @@ namespace MessagingWebApi.Models
 {
     public class MessageRequestDto
     {
-        public string MessageBody { get; set; }
-        public int SenderId { get; set; }
-        public int RecieverId { get; set; }
+        public string message_body { get; set; }
+        public int user_id { get; set; }
+        public int friend_id { get; set; }
     }
 }
