@@ -16,6 +16,7 @@
 ### Include ###
 
 * [NLog] for logging 
+* [XUnit] for unit test and coverage.
 * [EntityFramework] for database query
 * [Postman API Endpoints] for testing the application 
 
@@ -30,6 +31,9 @@
 
 ### Notes ###
 The project was challenging and fun.I spend aproximately 15 hours on this project. This is the first time i builded .NET Core Web Api and found it quite useful. Used NLog for logging it was easy to setup. EntityFramework for MSSQL localdatabase migration and queries. It was confusing at first which way to go Code-First or Database-First approach. I moved on with Code-First, however i could not be able to setup up foreign keys and table relations correctly. 
+Test class is not very comprehensive. Couldn't find a way to tweak ILogger interface.
+Login/Register could be done with an authentication framework or with token. 
+
 Thanks.
 
 ### Presentation ###
